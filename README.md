@@ -1,66 +1,106 @@
-## Foundry
+# Decentralized Stablecoin (DSC) System
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+## Overview
 
-Foundry consists of:
+This project implements a **Decentralized Stablecoin (DSC)** system, designed to maintain a 1:1 USD peg using crypto-collateralized assets. The system is **overcollateralized**, algorithmically stable, and minimalistic, similar to MakerDAO’s DAI but without governance or fees.  
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+The core contract is [`DSCEngine.sol`](./DSCEngine.sol), which handles:
 
-## Documentation
+- Depositing and redeeming collateral (WETH, WBTC, or other allowed ERC20 tokens)  
+- Minting and burning DSC tokens  
+- Liquidating undercollateralized accounts  
+- Maintaining health factor to prevent insolvency  
 
-https://book.getfoundry.sh/
+---
+
+## Key Features
+
+- **Dollar-Pegged:** DSC aims to maintain $1 value per token.  
+- **Exogenously Collateralized:** Users deposit ERC20 tokens like WETH/WBTC as collateral.  
+- **Overcollateralization:** Ensures system solvency. Collateral must always exceed minted DSC value.  
+- **Liquidation Mechanism:** Undercollateralized positions can be liquidated with a bonus incentive.  
+- **Secure Design:** Uses OpenZeppelin’s `ReentrancyGuard` and checks for zero amounts, allowed tokens, and health factor violations.
+
+---
+
+## Contracts
+
+### DSCEngine.sol
+
+This is the core contract controlling the DSC system. It integrates:
+
+- **Collateral Management:** Deposit and redeem collateral tokens.
+- **DSC Minting & Burning:** Safely mint and burn DSC tokens with health factor checks.
+- **Liquidation:** Partial liquidation of undercollateralized users with bonus for liquidators.
+- **Health Factor Calculations:** Ensures all users maintain minimum collateralization.
+
+#### Important Constants
+
+| Constant                     | Description |
+|-------------------------------|-------------|
+| `LIQUIDATION_THRESHOLD`       | Collateral must be 200% of debt (50% threshold). |
+| `LIQUIDATION_BONUS`           | Liquidators receive 10% bonus collateral. |
+| `MIN_HEALTH_FACTOR`           | Minimum acceptable health factor (1e18). |
+| `PRECISION`                   | Internal precision for calculations (1e18). |
+| `ADDITIONAL_FEED_PRECISION`   | Used to normalize Chainlink price feeds (1e10). |
+
+---
+
+### DecentralizedStableCoin.sol
+
+- ERC20 token representing the stablecoin.
+- Minted and burned exclusively by the `DSCEngine`.
+- 1 DSC = $1 USD (pegged).
+
+---
 
 ## Usage
 
-### Build
+### Deposit Collateral & Mint DSC
 
-```shell
-$ forge build
-```
+```solidity
+dscEngine.depositCollateralAndMintDsc(tokenAddress, collateralAmount, dscAmount);
+Redeem Collateral for DSC
+solidity
+Copy
+Edit
+dscEngine.redeemCollateralForDsc(tokenAddress, collateralAmount, dscAmountToBurn);
+Burn DSC Without Redeeming Collateral
+solidity
+Copy
+Edit
+dscEngine.burnDsc(dscAmount);
+Liquidate an Undercollateralized User
+solidity
+Copy
+Edit
+dscEngine.liquidate(collateralToken, user, debtToCover);
+Health Factor
+The health factor ensures users maintain sufficient collateral:
 
-### Test
+ini
+Copy
+Edit
+healthFactor = (collateralValue * LIQUIDATION_THRESHOLD) / totalDscMinted
+healthFactor < 1 → user can be liquidated
 
-```shell
-$ forge test
-```
+healthFactor >= 1 → safe
 
-### Format
+Collateral Tokens
+Supported ERC20 tokens must have a linked Chainlink price feed.
 
-```shell
-$ forge fmt
-```
+The constructor takes arrays of token addresses and their corresponding price feeds.
 
-### Gas Snapshots
+solidity
+Copy
+Edit
+constructor(address[] memory tokenAddresses, address[] memory priceFeeds, address dscAddress) {}
+Security
+ReentrancyGuard: Prevents reentrancy attacks on deposits, withdrawals, and liquidation.
 
-```shell
-$ forge snapshot
-```
+Input Validations: Checks for zero amounts and allowed tokens.
 
-### Anvil
+Health Factor Enforcement: Users cannot mint or redeem in ways that violate minimum collateral requirements.
 
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+License
+This project is licensed under the MIT License.
