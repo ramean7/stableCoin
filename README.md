@@ -56,51 +56,69 @@ This is the core contract controlling the DSC system. It integrates:
 
 ## Usage
 
-### Deposit Collateral & Mint DSC
+🏦 Decentralized Stablecoin Engine (DSCEngine)
 
-```solidity
+The DSCEngine is a decentralized stablecoin protocol that allows users to mint, burn, redeem, and liquidate a collateral-backed stablecoin (DSC). It leverages ERC20 tokens as collateral and Chainlink price feeds for secure and reliable on-chain valuations.
+
+Core Functions
+
+Deposit Collateral and Mint DSC
+
 dscEngine.depositCollateralAndMintDsc(tokenAddress, collateralAmount, dscAmount);
+
+
+Users deposit an ERC20 token as collateral and mint DSC against it.
+
 Redeem Collateral for DSC
-solidity
-Copy
-Edit
+
 dscEngine.redeemCollateralForDsc(tokenAddress, collateralAmount, dscAmountToBurn);
+
+
+Users burn DSC to unlock and redeem their collateral.
+
 Burn DSC Without Redeeming Collateral
-solidity
-Copy
-Edit
+
 dscEngine.burnDsc(dscAmount);
+
+
+Users can burn DSC directly to reduce their debt without withdrawing collateral.
+
 Liquidate an Undercollateralized User
-solidity
-Copy
-Edit
+
 dscEngine.liquidate(collateralToken, user, debtToCover);
+
+
+If a user’s position falls below the required collateral ratio, they can be liquidated. Liquidators cover part of the user’s debt and receive collateral at a discount.
+
 Health Factor
-The health factor ensures users maintain sufficient collateral:
 
-ini
-Copy
-Edit
+The health factor determines whether a user’s position is safe or at risk:
+
 healthFactor = (collateralValue * LIQUIDATION_THRESHOLD) / totalDscMinted
-healthFactor < 1 → user can be liquidated
 
-healthFactor >= 1 → safe
+
+healthFactor < 1 → the user can be liquidated.
+
+healthFactor >= 1 → the position is safe.
 
 Collateral Tokens
-Supported ERC20 tokens must have a linked Chainlink price feed.
 
-The constructor takes arrays of token addresses and their corresponding price feeds.
+Only approved ERC20 tokens can be used as collateral.
 
-solidity
-Copy
-Edit
+Each collateral token must have an associated Chainlink price feed.
+
+Constructor:
+
 constructor(address[] memory tokenAddresses, address[] memory priceFeeds, address dscAddress) {}
+
 Security
-ReentrancyGuard: Prevents reentrancy attacks on deposits, withdrawals, and liquidation.
 
-Input Validations: Checks for zero amounts and allowed tokens.
+ReentrancyGuard: prevents reentrancy attacks on deposits, withdrawals, and liquidations.
 
-Health Factor Enforcement: Users cannot mint or redeem in ways that violate minimum collateral requirements.
+Input Validation: ensures zero amounts or unsupported tokens cannot be used.
+
+Health Factor Enforcement: disallows minting or redeeming if it would violate collateral requirements.
 
 License
+
 This project is licensed under the MIT License.
