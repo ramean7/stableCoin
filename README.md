@@ -60,65 +60,61 @@ This is the core contract controlling the DSC system. It integrates:
 
 The DSCEngine is a decentralized stablecoin protocol that allows users to mint, burn, redeem, and liquidate a collateral-backed stablecoin (DSC). It leverages ERC20 tokens as collateral and Chainlink price feeds for secure and reliable on-chain valuations.
 
-Core Functions
+🚀 Core Functions
 
-Deposit Collateral and Mint DSC
+1. Deposit Collateral and Mint DSC
 
 dscEngine.depositCollateralAndMintDsc(tokenAddress, collateralAmount, dscAmount);
 
+Users deposit ERC20 collateral and mint DSC against it.
 
-Users deposit an ERC20 token as collateral and mint DSC against it.
-
-Redeem Collateral for DSC
+2. Redeem Collateral for DSC
 
 dscEngine.redeemCollateralForDsc(tokenAddress, collateralAmount, dscAmountToBurn);
 
-
 Users burn DSC to unlock and redeem their collateral.
 
-Burn DSC Without Redeeming Collateral
+3. Burn DSC Without Redeeming Collateral
 
 dscEngine.burnDsc(dscAmount);
 
+Users can burn DSC directly to reduce debt without withdrawing collateral.
 
-Users can burn DSC directly to reduce their debt without withdrawing collateral.
-
-Liquidate an Undercollateralized User
+4. Liquidate an Undercollateralized User
 
 dscEngine.liquidate(collateralToken, user, debtToCover);
 
+If a user’s health factor falls below 1, they can be liquidated. Liquidators repay part of the debt and receive collateral at a discount.
 
-If a user’s position falls below the required collateral ratio, they can be liquidated. Liquidators cover part of the user’s debt and receive collateral at a discount.
+📊 Health Factor
 
-Health Factor
-
-The health factor determines whether a user’s position is safe or at risk:
+The health factor ensures that users maintain enough collateral:
 
 healthFactor = (collateralValue * LIQUIDATION_THRESHOLD) / totalDscMinted
 
+healthFactor < 1 → user can be liquidated
 
-healthFactor < 1 → the user can be liquidated.
+healthFactor >= 1 → position is safe
 
-healthFactor >= 1 → the position is safe.
+🪙 Collateral Tokens
 
-Collateral Tokens
+Only approved ERC20 tokens can be used as collateral
 
-Only approved ERC20 tokens can be used as collateral.
-
-Each collateral token must have an associated Chainlink price feed.
+Each collateral token must have a Chainlink price feed
 
 Constructor:
 
 constructor(address[] memory tokenAddresses, address[] memory priceFeeds, address dscAddress) {}
 
-Security
+🔒 Security Features
 
-ReentrancyGuard: prevents reentrancy attacks on deposits, withdrawals, and liquidations.
+ReentrancyGuard → protects deposits, withdrawals, and liquidations
 
-Input Validation: ensures zero amounts or unsupported tokens cannot be used.
+Input Validation → prevents zero amounts or unsupported tokens
 
-Health Factor Enforcement: disallows minting or redeeming if it would violate collateral requirements.
+Health Factor Enforcement → disallows unsafe minting or redeeming
 
-License
+📜 License
 
 This project is licensed under the MIT License.
+
